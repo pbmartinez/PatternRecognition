@@ -2,6 +2,23 @@
 
 <h3>SentimentAnalysisPage</h3>
 
-@code {
+<MudGrid Spacing="@spacing" Justify="Justify.SpaceEvenly">
+    <MudItem>
+        <MudPaper Height="140px" Width="140px">
+            <MudImage Src="images/poppy.jpg" Alt="Funny" Elevation="25" Class="rounded-lg" />
 
+        </MudPaper>
+    </MudItem>
+    <MudItem>
+        <MudPaper Height="140px" Width="140px">
+            <MudImage Src="images/branch.jpg" Alt="Angry" Elevation="25" Class="rounded-lg" />
+        </MudPaper>
+    </MudItem>
+    <MudItem>
+        <MudSlider Value="@value">Volume</MudSlider>
+    </MudItem>
+</MudGrid>
+@code {
+    double value = 50.0;
+    public int spacing { get; set; } = 2;
 }
