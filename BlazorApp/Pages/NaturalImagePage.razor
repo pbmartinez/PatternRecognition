@@ -1,31 +1,70 @@
 ﻿@page "/image-analysis"
+@using Core
 
 @inject ISnackbar Snackbar
+@inject HttpClient HttpClient
 
 <MudText Typo="Typo.h4" GutterBottom="true">Image Analysis</MudText>
+@if (loading)
+{
+    <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </MudItem>
+}
+else
+{
+    <InputFile id="fileInput112" OnChange="UploadFiles" hidden multiple accept=".jpg, .jpeg, .png" />
 
-<InputFile id="fileInput112" OnChange="UploadFiles" hidden multiple accept=".jpg, .jpeg, .png" />
-
-<MudButton HtmlTag="label"
+    <MudButton HtmlTag="label"
            Variant="Variant.Filled"
            Color="Color.Primary"
            StartIcon="@Icons.Filled.CloudUpload"
            for="fileInput112">
-    Upload your images
-</MudButton>
+        Upload your image
+    </MudButton>
+}
 
+<MudGrid>
+    @if (!string.IsNullOrEmpty(imageInBase64))
+    {
+        <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
+            <MudImage Src="@imageInBase64" Alt="Funny" Elevation="25" Class="rounded-lg" Width="200" Height="250" />
+        </MudItem>
+    }
+    @if (!loading && Output != null && Output.Score != null)
+    {
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 mt-6 mt-lg-16" Elevation="0">
+                <MudInputLabel>Image is: @Output.PredictedLabel</MudInputLabel>
+
+
+                <MudText> Certain level: @Math.Round(Output.Score.Max(),2) % </MudText>
+
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
 
 @code
 {
-    private void UploadFiles(InputFileChangeEventArgs e)
+    string imageInBase64 = string.Empty;
+    bool loading = false;
+    RecognizeNaturalImages.ModelOutput Output = new RecognizeNaturalImages.ModelOutput();
+    private async Task UploadFiles(InputFileChangeEventArgs e)
     {
-        var entries = e.GetMultipleFiles();
-        //Do your validations here
-        //Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-        //Snackbar.Add($"Files with {entries.FirstOrDefault().Size} bytes size are not allowed", Severity.Error);
-        //Snackbar.Add($"Files starting with letter {entries.FirstOrDefault().Name.Substring(0, 1)} are not recommended", Severity.Warning);
-        //Snackbar.Add($"This file has the extension {entries.FirstOrDefault().Name.Split(".").Last()}", Severity.Info);
+        loading = true;
+        imageInBase64 = string.Empty;
 
-        //TODO upload the files to the server
+
+        var picture = e.GetMultipleFiles().FirstOrDefault();
+        var arrayOfBytes = new byte[picture.Size];
+        using (var ms = picture.OpenReadStream())
+        {
+            var bytesRead = ms.Read(arrayOfBytes, 0, arrayOfBytes.Length);
+        }
+        imageInBase64 = Convert.ToBase64String(arrayOfBytes);
+        Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>($"/api/patterns/recognize-image?imageInBase64={imageInBase64}");
+
+        loading = false;
     }
 }
