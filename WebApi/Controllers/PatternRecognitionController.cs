@@ -30,5 +30,14 @@ namespace WebApi.Controllers
             };
             return Ok(RecognizeNaturalImages.Predict(input));
         }
+        [HttpGet("recognize-image-bytes")]
+        public IActionResult GetPicture([ModelBinder(typeof(ArrayModelBinder))]IEnumerable<string> arrayOfBytes)
+        {
+            var input = new RecognizeNaturalImages.ModelInput()
+            {
+                ImageSource = arrayOfBytes.Select(a=>byte.Parse(a)).ToArray()
+            };
+            return Ok(RecognizeNaturalImages.Predict(input));
+        }
     }
 }

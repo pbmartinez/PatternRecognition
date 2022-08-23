@@ -5,11 +5,19 @@
 @inject HttpClient HttpClient
 
 <MudText Typo="Typo.h4" GutterBottom="true">Image Analysis</MudText>
-@if (loading)
+@if (State == ProcessingState.Loading || State == ProcessingState.Processing)
 {
     <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
         <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
     </MudItem>
+    if(State == ProcessingState.Loading)
+    {
+        <MudText>Please wait ... loading image</MudText>
+    }
+    if(State == ProcessingState.Loading)
+    {
+        <MudText>Please wait ... processing image</MudText>
+    }
 }
 else
 {
@@ -31,7 +39,7 @@ else
             <MudImage Src="@imageInBase64" Alt="Funny" Elevation="25" Class="rounded-lg" Width="200" Height="250" />
         </MudItem>
     }
-    @if (!loading && Output != null && Output.Score != null)
+    @if (State == ProcessingState.Display && Output != null && Output.Score != null)
     {
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-4 mt-6 mt-lg-16" Elevation="0">
@@ -47,28 +55,39 @@ else
 
 @code
 {
+    private enum ProcessingState
+    {
+        Display,
+        Loading,
+        Processing
+    }
+    ProcessingState State = ProcessingState.Display;
     string imageInBase64 = string.Empty;
-    bool loading = false;
     RecognizeNaturalImages.ModelOutput Output = new RecognizeNaturalImages.ModelOutput();
     private async Task UploadFiles(InputFileChangeEventArgs e)
     {
-        loading = true;
+        State = ProcessingState.Loading;
         imageInBase64 = string.Empty;
         var entries = e.GetMultipleFiles();
-
-        foreach (var item in entries)
+        var base64 = string.Empty;
+        var item = entries.FirstOrDefault()!;
+        var arrayOfBytes = new byte[item.Size];
+        using (var sr = item.OpenReadStream())
         {
-            var arrayOfBytes = new byte[item.Size];
-            using (var sr = item.OpenReadStream())
-            {
-                await sr.ReadAsync(arrayOfBytes, 0, (int)item.Size);
-            }
-            var base64 = Convert.ToBase64String(arrayOfBytes);
-            imageInBase64 = $"data:{item.ContentType};base64, {base64}";
+            await sr.ReadAsync(arrayOfBytes, 0, (int)item.Size);
         }
-        Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>($"/api/patterns/recognize-image?imageInBase64={base64}");
-
-        loading = false;
+        base64 = Convert.ToBase64String(arrayOfBytes);
+        imageInBase64 = $"data:{item.ContentType};base64,{base64}";
+        var arrayOfBytesAsCvs = string.Join(',', arrayOfBytes);
+        //State = ProcessingState.Loading;
+        //Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>($"/api/patterns/recognize-image?imageInBase64={imageInBase64}");
+        Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>
+                    ($"/api/patterns/recognize-image-bytes?arrayOfBytes={arrayOfBytesAsCvs}");
+        if (Output == null)
+            Snackbar.Add("Houston ... we have a problem", Severity.Error);
+        if (Output != null)
+            Snackbar.Add("Processing has finished", Severity.Info);
+        State = ProcessingState.Display;
     }
     
 }
