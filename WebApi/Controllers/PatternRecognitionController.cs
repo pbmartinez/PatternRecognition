@@ -23,29 +23,12 @@ namespace WebApi.Controllers
         public IActionResult GetPicture(string imageInBase64)
         {
             byte[] arrayOfBytes = Convert.FromBase64String(imageInBase64);
-            /*
-             
-        Console.WriteLine("Byte Array is: " + String.Join(" ", bytes));
- 
-        string str = Convert.ToBase64String(bytes);
-        Console.WriteLine("The String is: " + str);*/
-            RecognizeNaturalImages.ModelInput input = new RecognizeNaturalImages.ModelInput()
+            
+            var input = new RecognizeNaturalImages.ModelInput()
             {
                 ImageSource = arrayOfBytes
             };
             return Ok(RecognizeNaturalImages.Predict(input));
-        }
-
-        private void UploadFiles(InputFileChangeEventArgs e)
-        {
-            var picture = e.GetMultipleFiles().FirstOrDefault();
-            var arrayOfBytes = new byte[picture.Size];
-            using (var ms = picture.OpenReadStream())
-            {
-                var bytesRead = ms.Read(arrayOfBytes,0, arrayOfBytes.Length);
-            }
-            string str = Convert.ToBase64String(arrayOfBytes);
-
         }
     }
 }

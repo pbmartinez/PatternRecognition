@@ -54,17 +54,21 @@ else
     {
         loading = true;
         imageInBase64 = string.Empty;
+        var entries = e.GetMultipleFiles();
 
-
-        var picture = e.GetMultipleFiles().FirstOrDefault();
-        var arrayOfBytes = new byte[picture.Size];
-        using (var ms = picture.OpenReadStream())
+        foreach (var item in entries)
         {
-            var bytesRead = ms.Read(arrayOfBytes, 0, arrayOfBytes.Length);
+            var arrayOfBytes = new byte[item.Size];
+            using (var sr = item.OpenReadStream())
+            {
+                await sr.ReadAsync(arrayOfBytes, 0, (int)item.Size);
+            }
+            var base64 = Convert.ToBase64String(arrayOfBytes);
+            imageInBase64 = $"data:{item.ContentType};base64, {base64}";
         }
-        imageInBase64 = Convert.ToBase64String(arrayOfBytes);
-        Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>($"/api/patterns/recognize-image?imageInBase64={imageInBase64}");
+        Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>($"/api/patterns/recognize-image?imageInBase64={base64}");
 
         loading = false;
     }
+    
 }
