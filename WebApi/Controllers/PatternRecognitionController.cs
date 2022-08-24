@@ -33,11 +33,25 @@ namespace WebApi.Controllers
         [HttpGet("recognize-image-bytes")]
         public IActionResult GetPicture([ModelBinder(typeof(ArrayModelBinder))]IEnumerable<string> arrayOfBytes)
         {
-            var input = new RecognizeNaturalImages.ModelInput()
+            var arr = new byte[arrayOfBytes.Count()];
+            var valor = "";
+            try
             {
-                ImageSource = arrayOfBytes.Select(a=>byte.Parse(a)).ToArray()
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    valor = arrayOfBytes.ElementAt(i);
+                    arr[i] = byte.Parse(arrayOfBytes.ElementAt(i));
+                }
+            }
+            catch (Exception ex)
+            {
+                var a = ex;
+            }
+            var input = new RecognizeImages.ModelInput()
+            {
+                ImageSource = arr
             };
-            return Ok(RecognizeNaturalImages.Predict(input));
+            return Ok(RecognizeImages.Predict(input));
         }
     }
 }
