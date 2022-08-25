@@ -1,0 +1,99 @@
+﻿@page "/image-analysis"
+@using Core
+@using Newtonsoft.Json
+@using static Core.RecognizeNaturalImages
+
+@inject ISnackbar Snackbar
+@inject HttpClient HttpClient
+
+<MudText Typo="Typo.h4" GutterBottom="true">Image Analysis</MudText>
+@if (State == ProcessingState.Loading || State == ProcessingState.Processing)
+{
+    <MudItem xs="12" md="8" Class="d-flex justify-center align-center">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </MudItem>
+
+    if(State == ProcessingState.Loading)
+    {
+        <MudText>Please wait ... loading image</MudText>
+    }
+    if(State == ProcessingState.Processing)
+    {
+        <MudText>Please wait ... processing image</MudText>
+    }
+}
+else
+{
+    <InputFile id="fileInput112" OnChange="UploadFiles" hidden multiple accept=".jpg, .jpeg, .png" />
+
+    <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Filled.CloudUpload"for="fileInput112">
+        Upload your image
+    </MudButton>
+}
+
+<MudGrid>
+    @if (!string.IsNullOrEmpty(imageInBase64))
+    {
+        <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
+            <MudImage Src="@imageInBase64" Alt="Funny" Elevation="25" Class="rounded-lg" Width="200" Height="250" />
+        </MudItem>
+    }
+    @if (State == ProcessingState.Display && Output != null && Output.Score != null)
+    {
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 mt-6 mt-lg-16" Elevation="0">
+                <MudText Typo="Typo.h4"> The image is:<b>@Output.PredictedLabel</b></MudText>
+
+
+                <MudText> Certain level: @Math.Round(Output.Score.Max(),2) % </MudText>
+
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
+
+@code
+{
+    private enum ProcessingState
+    {
+        Display,
+        Loading,
+        Processing
+    }
+    ProcessingState State = ProcessingState.Display;
+    string imageInBase64 = string.Empty;
+    RecognizeNaturalImages.ModelOutput Output = new RecognizeNaturalImages.ModelOutput();
+    private async Task UploadFiles(InputFileChangeEventArgs e)
+    {
+        State = ProcessingState.Loading;
+        imageInBase64 = string.Empty;
+        var entries = e.GetMultipleFiles();
+        var base64 = string.Empty;
+        var item = entries.FirstOrDefault()!;
+        var arrayOfBytes = new byte[item.Size];
+        using (var sr = item.OpenReadStream())
+        {
+            await sr.ReadAsync(arrayOfBytes, 0, (int)item.Size);
+        }
+        base64 = Convert.ToBase64String(arrayOfBytes);
+        imageInBase64 = $"data:{item.ContentType};base64, {base64}";
+        var arrayOfBytesAsCvs = string.Join(',', arrayOfBytes);
+
+        var response = await HttpClient.PostAsJsonAsync($"/api/patterns/recognize-image", base64);
+        //var response2 = await HttpClient.PostAsJsonAsync($"/api/patterns/recognize-image-bytes", arrayOfBytes);
+
+        var content = await response.Content.ReadAsStringAsync();
+        //var content2 = await response2.Content.ReadAsStringAsync();
+
+        ModelOutput prediction1 = JsonConvert.DeserializeObject<ModelOutput>(content);
+        //ModelOutput prediction2 = JsonConvert.DeserializeObject<ModelOutput>(content2);
+        Output = prediction1;
+
+        if (Output == null)
+            Snackbar.Add("Houston ... we have a problem", Severity.Error);
+        if (Output != null)
+            Snackbar.Add("Processing has finished", Severity.Info);
+        State = ProcessingState.Display;
+    }
+    
+}

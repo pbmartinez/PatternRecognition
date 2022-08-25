@@ -1,24 +1,89 @@
 ﻿@page "/sentiment-analysis"
+@using BlazorApp.Models
+@using Core
+@using System.Web
+@using static Core.SentimentAnalysis
+@inject HttpClient HttpClient
 
-<h3>SentimentAnalysisPage</h3>
+<MudText Typo="Typo.h4" GutterBottom="true">Sentiment Analysis</MudText>
 
-<MudGrid Spacing="@spacing" Justify="Justify.SpaceEvenly">
-    <MudItem>
-        <MudPaper Height="140px" Width="140px">
-            <MudImage Src="images/poppy.jpg" Alt="Funny" Elevation="25" Class="rounded-lg" />
-
+<MudGrid>
+    @if (loading)
+    {
+        <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+        </MudItem>
+    }
+    else
+    {
+        @if (State == EmotionState.Neutro)
+        {
+            <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
+                <MudImage Src="images/neutro.png" Alt="Funny" Elevation="25" Class="rounded-lg" Width="200" Height="250" />
+            </MudItem>
+        }
+        @if (State == EmotionState.Positive)
+        {
+            <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
+                <MudImage Src="images/poppy.jpg" Alt="Funny" Elevation="25" Class="rounded-lg" Width="250" Height="250" />
+            </MudItem>
+        }
+        @if (State == EmotionState.Negative)
+        {
+            <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
+                <MudImage Src="images/branch.jpg" Alt="Angry" Elevation="25" Class="rounded-lg" Width="200" Height="250" />
+            </MudItem>
+        }
+    }
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-4 mt-6 mt-lg-16" Elevation="0">
+            <MudInputLabel>Message</MudInputLabel>
+            <MudInput T="string" Label="Message" Placeholder="Enter the message" @bind-Value="@Input.SentimentText"
+                      Required="true" RequiredError="The message is required!" Lines="5"
+                      @onchange="UpdateOutput">
+            </MudInput>
+            <div class="d-flex justify-space-between align-center mt-4">
+                <MudInputLabel>Is user logged in</MudInputLabel>
+                <MudSwitch @bind-Checked="@Input.LoggedIn" Color="Color.Primary" />
+            </div>
+            <MudButton OnClick="UpdateOutput" Variant="Variant.Filled" Color="Color.Primary">Lavarage sentiment</MudButton>
+           @if(State == EmotionState.Positive || State== EmotionState.Negative)
+           {
+                <MudText> Certain level: @Math.Round( Output.Score.Max(),2) % </MudText>
+           }
         </MudPaper>
-    </MudItem>
-    <MudItem>
-        <MudPaper Height="140px" Width="140px">
-            <MudImage Src="images/branch.jpg" Alt="Angry" Elevation="25" Class="rounded-lg" />
-        </MudPaper>
-    </MudItem>
-    <MudItem>
-        <MudSlider Value="@value">Volume</MudSlider>
     </MudItem>
 </MudGrid>
+
 @code {
+
+    EmotionState State = EmotionState.Neutro;
+    bool loading = false;
     double value = 50.0;
     public int spacing { get; set; } = 2;
+    public ModelInput Input { get; set; } = new ModelInput() { SentimentText = "", LoggedIn = false, Sentiment = 0 };
+    public ModelOutput Output { get; set; } = new ModelOutput();
+    public async Task UpdateOutput()
+    {
+        loading = true;
+        if (string.IsNullOrWhiteSpace(Input.SentimentText) || string.IsNullOrEmpty(Input.SentimentText))
+        {
+            value = 50.0;
+            return;
+        }
+        Output = await HttpClient.GetFromJsonAsync<ModelOutput>($"/api/patterns/recognize-sentiment?SentimentText={Input.SentimentText}&LoggedIn={Input.LoggedIn}");
+        if (Output != null)
+        {
+            value = Output.Score[0] > Output.Score[1] ? Output.Score[0] * 100 : (1 - Output.Score[0]) * 100;
+            if (Output.PredictedLabel == 0)
+            {
+                State = EmotionState.Positive;
+            }
+            if (Output.PredictedLabel == 1)
+            {
+                State = EmotionState.Negative;
+            }
+        }
+        loading = false;
+    }
 }

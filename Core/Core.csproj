@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.ML" Version="1.7.1" />
+    <PackageReference Include="Microsoft.ML.Vision" Version="1.7.1" />
   </ItemGroup>
   <ItemGroup Label="SentimentAnalysis">
     <None Include="SentimentAnalysis.consumption.cs">
@@ -16,7 +17,7 @@
     </None>
     <None Include="SentimentAnalysis.zip">
       <DependentUpon>SentimentAnalysis.mbconfig</DependentUpon>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>
