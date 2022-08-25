@@ -8,7 +8,7 @@ using Microsoft.ML.Data;
 using Microsoft.ML.Vision;
 using Microsoft.ML;
 
-namespace WebApi
+namespace RecognizeImages_WebApi
 {
     public partial class RecognizeImages
     {

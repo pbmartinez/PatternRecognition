@@ -79,8 +79,6 @@ else
         base64 = Convert.ToBase64String(arrayOfBytes);
         imageInBase64 = $"data:{item.ContentType};base64,{base64}";
         var arrayOfBytesAsCvs = string.Join(',', arrayOfBytes);
-        //State = ProcessingState.Loading;
-        //Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>($"/api/patterns/recognize-image?imageInBase64={imageInBase64}");
         Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>
                     ($"/api/patterns/recognize-image-bytes?arrayOfBytes={arrayOfBytesAsCvs}");
         if (Output == null)

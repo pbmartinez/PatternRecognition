@@ -1,3 +1,6 @@
+using Core;
+using Microsoft.Extensions.ML;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -13,6 +16,8 @@ builder.Services.AddCors(policy=>
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
+builder.Services.AddPredictionEnginePool<RecognizeNaturalImages.ModelInput, RecognizeNaturalImages.ModelOutput>()
+    .FromFile("RecognizeNaturalImages.zip");
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

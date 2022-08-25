@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
+using Microsoft.Extensions.ML;
 using WebApi.Helpers;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -12,7 +13,13 @@ namespace WebApi.Controllers
     [ApiController]
     public class PatternRecognitionController : ControllerBase
     {
-        
+        PredictionEnginePool<RecognizeNaturalImages.ModelInput, RecognizeNaturalImages.ModelOutput> predictionEnginePool;
+
+        public PatternRecognitionController(PredictionEnginePool<RecognizeNaturalImages.ModelInput, RecognizeNaturalImages.ModelOutput> predictionEnginePool)
+        {
+            this.predictionEnginePool = predictionEnginePool ?? throw new ArgumentNullException(nameof(predictionEnginePool));
+        }
+
         [HttpGet("recognize-sentiment")]
         public ActionResult<SentimentAnalysis.ModelOutput> GetSentiment([FromQuery]SentimentAnalysis.ModelInput input)
         {
@@ -47,11 +54,13 @@ namespace WebApi.Controllers
             {
                 var a = ex;
             }
-            var input = new RecognizeImages.ModelInput()
+            var input = new RecognizeNaturalImages.ModelInput()
             {
                 ImageSource = arr
             };
-            return Ok(RecognizeImages.Predict(input));
+
+            //return Ok(RecognizeNaturalImages.Predict(input));
+            return Ok(predictionEnginePool.Predict(input));
         }
     }
 }
