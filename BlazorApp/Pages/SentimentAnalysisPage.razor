@@ -46,7 +46,7 @@
                 <MudInputLabel>Is user logged in</MudInputLabel>
                 <MudSwitch @bind-Checked="@Input.LoggedIn" Color="Color.Primary" />
             </div>
-            <MudButton OnClick="UpdateOutput" Color="Color.Primary">Lavarage sentiment</MudButton>
+            <MudButton OnClick="UpdateOutput" Variant="Variant.Filled" Color="Color.Primary">Lavarage sentiment</MudButton>
            @if(State == EmotionState.Positive || State== EmotionState.Negative)
            {
                 <MudText> Certain level: @Math.Round( Output.Score.Max(),2) % </MudText>

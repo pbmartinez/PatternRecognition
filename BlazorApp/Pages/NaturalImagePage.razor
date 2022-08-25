@@ -9,9 +9,10 @@
 <MudText Typo="Typo.h4" GutterBottom="true">Image Analysis</MudText>
 @if (State == ProcessingState.Loading || State == ProcessingState.Processing)
 {
-    <MudItem xs="12" md="8" Class="d-flex justify-center align-center" Style="height:500px;">
+    <MudItem xs="12" md="8" Class="d-flex justify-center align-center">
         <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
     </MudItem>
+
     if(State == ProcessingState.Loading)
     {
         <MudText>Please wait ... loading image</MudText>
@@ -25,11 +26,7 @@ else
 {
     <InputFile id="fileInput112" OnChange="UploadFiles" hidden multiple accept=".jpg, .jpeg, .png" />
 
-    <MudButton HtmlTag="label"
-           Variant="Variant.Filled"
-           Color="Color.Primary"
-           StartIcon="@Icons.Filled.CloudUpload"
-           for="fileInput112">
+    <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Filled.CloudUpload"for="fileInput112">
         Upload your image
     </MudButton>
 }
@@ -45,7 +42,7 @@ else
     {
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-4 mt-6 mt-lg-16" Elevation="0">
-                <MudInputLabel>The image is:<b>@Output.PredictedLabel</b> </MudInputLabel>
+                <MudText Typo="Typo.h4"> The image is:<b>@Output.PredictedLabel</b></MudText>
 
 
                 <MudText> Certain level: @Math.Round(Output.Score.Max(),2) % </MudText>
@@ -83,13 +80,13 @@ else
         var arrayOfBytesAsCvs = string.Join(',', arrayOfBytes);
 
         var response = await HttpClient.PostAsJsonAsync($"/api/patterns/recognize-image", base64);
-        var response2 = await HttpClient.PostAsJsonAsync($"/api/patterns/recognize-image-bytes", arrayOfBytes);
+        //var response2 = await HttpClient.PostAsJsonAsync($"/api/patterns/recognize-image-bytes", arrayOfBytes);
 
         var content = await response.Content.ReadAsStringAsync();
-        var content2 = await response2.Content.ReadAsStringAsync();
+        //var content2 = await response2.Content.ReadAsStringAsync();
 
         ModelOutput prediction1 = JsonConvert.DeserializeObject<ModelOutput>(content);
-        ModelOutput prediction2 = JsonConvert.DeserializeObject<ModelOutput>(content2);
+        //ModelOutput prediction2 = JsonConvert.DeserializeObject<ModelOutput>(content2);
         Output = prediction1;
 
         if (Output == null)
