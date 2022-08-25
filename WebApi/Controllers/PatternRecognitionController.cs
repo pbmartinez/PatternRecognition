@@ -26,8 +26,8 @@ namespace WebApi.Controllers
             return Ok(SentimentAnalysis.Predict(input));
         }
 
-        [HttpGet("recognize-image")]
-        public IActionResult GetPicture(string imageInBase64)
+        [HttpPost("recognize-image")]
+        public IActionResult GetPicture([FromBody]string imageInBase64)
         {
             byte[] arrayOfBytes = Convert.FromBase64String(imageInBase64);
             
@@ -35,32 +35,18 @@ namespace WebApi.Controllers
             {
                 ImageSource = arrayOfBytes
             };
-            return Ok(RecognizeNaturalImages.Predict(input));
+            var output = predictionEnginePool.Predict(input);
+            return Ok(output);
         }
-        [HttpGet("recognize-image-bytes")]
-        public IActionResult GetPicture([ModelBinder(typeof(ArrayModelBinder))]IEnumerable<string> arrayOfBytes)
+        [HttpPost("recognize-image-bytes")]
+        public IActionResult GetPicture([FromBody]byte[] arrayOfBytes)
         {
-            var arr = new byte[arrayOfBytes.Count()];
-            var valor = "";
-            try
-            {
-                for (int i = 0; i < arr.Length; i++)
-                {
-                    valor = arrayOfBytes.ElementAt(i);
-                    arr[i] = byte.Parse(arrayOfBytes.ElementAt(i));
-                }
-            }
-            catch (Exception ex)
-            {
-                var a = ex;
-            }
             var input = new RecognizeNaturalImages.ModelInput()
             {
-                ImageSource = arr
+                ImageSource = arrayOfBytes
             };
-
-            //return Ok(RecognizeNaturalImages.Predict(input));
-            return Ok(predictionEnginePool.Predict(input));
+            var output = predictionEnginePool.Predict(input);
+            return Ok(output);
         }
     }
 }

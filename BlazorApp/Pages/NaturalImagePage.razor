@@ -1,5 +1,7 @@
 ﻿@page "/image-analysis"
 @using Core
+@using Newtonsoft.Json
+@using static Core.RecognizeNaturalImages
 
 @inject ISnackbar Snackbar
 @inject HttpClient HttpClient
@@ -43,7 +45,7 @@ else
     {
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-4 mt-6 mt-lg-16" Elevation="0">
-                <MudInputLabel>Image is: @Output.PredictedLabel</MudInputLabel>
+                <MudInputLabel>The image is:<b>@Output.PredictedLabel</b> </MudInputLabel>
 
 
                 <MudText> Certain level: @Math.Round(Output.Score.Max(),2) % </MudText>
@@ -77,10 +79,19 @@ else
             await sr.ReadAsync(arrayOfBytes, 0, (int)item.Size);
         }
         base64 = Convert.ToBase64String(arrayOfBytes);
-        imageInBase64 = $"data:{item.ContentType};base64,{base64}";
+        imageInBase64 = $"data:{item.ContentType};base64, {base64}";
         var arrayOfBytesAsCvs = string.Join(',', arrayOfBytes);
-        Output = await HttpClient.GetFromJsonAsync<RecognizeNaturalImages.ModelOutput>
-                    ($"/api/patterns/recognize-image-bytes?arrayOfBytes={arrayOfBytesAsCvs}");
+
+        var response = await HttpClient.PostAsJsonAsync($"/api/patterns/recognize-image", base64);
+        var response2 = await HttpClient.PostAsJsonAsync($"/api/patterns/recognize-image-bytes", arrayOfBytes);
+
+        var content = await response.Content.ReadAsStringAsync();
+        var content2 = await response2.Content.ReadAsStringAsync();
+
+        ModelOutput prediction1 = JsonConvert.DeserializeObject<ModelOutput>(content);
+        ModelOutput prediction2 = JsonConvert.DeserializeObject<ModelOutput>(content2);
+        Output = prediction1;
+
         if (Output == null)
             Snackbar.Add("Houston ... we have a problem", Severity.Error);
         if (Output != null)
